@@ -1,0 +1,158 @@
+@import "partials/mixins";
+@import "partials/functions";
+@import "partials/variables";
+
+$speakers : bob-banker, patty-plume, sandra-smith ; //THIS CREATES A LIST 
+
+@each $speaker in $speakers {
+  .#{$speaker}-profile {
+    background-image: url('/img/#{$speaker}.png');
+  }
+}
+
+$font-sizes: (tiny: 8px, small: 11px, medium: 13px, large: 18px);
+
+@each $name,$size in $font-sizes {
+  .#{$name} {
+    font-size: $size;
+  }
+}
+
+@include fancy-links;
+@include google-font("Alegreya+Sans");
+@include google-font("Titillium+Web");
+
+@include apply-to-ie6 {
+  body {
+    font-size: 125%;
+  }
+}
+
+$contrast : low;
+
+body {
+  font-family: $text-font ;
+  font-size: em(18px);
+  color: $text-color;
+  background-color: $body-background-color;
+ @include large-screens {
+    font-size: 125%;
+  }
+}
+
+h1, h2, h3, h4 {
+  font-family: $headline-font;
+}
+
+h2 {
+  @include large-text;
+}
+p {
+  font-family: $text-font;
+}
+
+a {
+  color: $link-color;
+
+  &:hover {
+    color: darken($link-color,15%); // SCSS function
+  } 
+}
+
+%hightlight {
+  font-style: italic;
+}
+
+.sub-title {
+  @extend %hightlight;
+  font-size: 20px;
+}
+
+.warning-button {
+  @include warning;
+  padding: 8px 12px;
+}
+
+.cta-button {
+  @extend .warning-button;
+  @include rounded;
+  font-weight: bold;
+}
+
+.super-cta-button {
+  @extend .cta-button;
+  font-size: em(20px);
+}
+#header {
+  @include box(8px, 1px solid #999);
+  @include box-shadow(2px 0px 4px #999, 1px 1px 6px $secondary-color);
+  height: $header-height;
+  background-color: $theme-color; 
+  #main-menu {
+    li {
+      display: inline;
+    }
+    a {
+      color: $menu-item-color;
+      padding: 6px 8px;
+      border-bottom: 1px solid transparentize($color: #fefefe, $amount: 1);
+      transition: border-bottom 0.2s;
+      transition-timing-function: ease-in-out;
+
+      &:hover {
+        border-bottom: 1px solid opacify($color: #fefefe, $amount: 0.5);
+      }
+    }
+  }
+  
+  #logo {
+
+  }
+}
+
+#main {
+  width: $content-width;
+  @include large-screens {
+    width: auto;
+    max-width: $content-width;
+  }
+  margin-left: auto;
+  margin-right: auto;
+  #content {
+    float: left;
+    width: 6*$col;
+  }
+
+  #sidebar {
+    float: right;
+    width: 2*$col;
+
+    li {
+      list-style-type: none;
+      padding: em(16px) em(20px);
+      border-bottom: 1px dashed #999;
+
+      &:hover {
+        background-color: #efefef;
+      }
+    }
+  }
+}
+
+#footer {
+  height: $footer-height;
+  background-color: $ternary-color; 
+  clear: both;
+
+  @include CSK {
+    background-color: yellow;
+  }
+
+  @include RCB {
+    background-color: red;
+  }
+  
+  @include KKR {
+    background-color:black;
+  }
+}

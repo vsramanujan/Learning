@@ -1,0 +1,511 @@
+What is a preprocessor? 
+- It is an additional step before CSS
+- It is a language on top of CSS
+- Compiles to CSS
+- Has powerful capabilities:
+  -> Variables
+  -> Nesting - Writing nested selectors can be a powerful tool
+  -> Mixins - We can write something like an Error style once - cleaner and readable - various libraries and frameworks that write mixins for you so that you dont need to write them yourself
+  -> Automatic vendor prefixing
+- We're basically going to end up using extensions, inheritance and mixins more frequently and so we end up writing better code
+- Various powerful frameworks and libraries
+
+
+SASS vs SCSS
+============
+
+SASS
+-----
+
+- Syntactically Awesome Style-Sheets
+- The original project that came up with the extra capabilities on top of CSS
+- Shorter since we don't use any curly braces or semi-colons
+
+Eg: (Basically python like - no ; or { } only indendation - since no ; cannot have 2 things in the same line)
+.container
+  float: left
+  width: 100%
+  p
+    color: #333
+
+
+SCSS (syntax that we are going to use)
+----
+
+- SASSY CSS
+- Newer syntax, closer to CSS language so that people who know CSS can quickly transition
+- Every CSS stylesheet is also an SCSS stylesheet (CSS is a subset of the SCSS syntax)
+- This has become the de-facto standard in many ways
+
+Eg: 
+.container {
+  float: left;
+  width: 100%;
+  p {
+    color : #333
+  }
+}
+
+
+          SCSS                                    SASS
+Curly braces and semi-colons                  Indentation
+Ignores whitespace                            Strict rules for whitespace
+@mixin my-mixin                               =my-mixin
+@include my-mixin                             +my-mixin
+@import foo                                   @import foo (same)
+@extend foo                                   @extend foo (same)
+
+
+Digress in to vscode tasks
+==========================
+
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Sass Compile",
+      "type": "shell",
+      "command": "node-sass style.scss styles.css",
+      "group": "build"
+    }
+  ]
+}
+
+
+VARIABLES IN SCSS 
+=================
+
+$<variable-name> :#222222;
+
+Note: Semi-colon is important
+
+Convention - All variable names are in lower case and sepearated by dash (-). Eg: $text-color : #22222;
+
+PARTIALS IN SCSS
+================
+
+Pariatls are also SCSS files on their own but they don't get converted into CSS files by the pre-processor
+
+Use cases: 
+1. All variables in a separate files
+2. Even better - colors in a separate file, fonts in a separate file etc   
+
+ALWAYS SAVE PARTIAL FILES AS _<file-name>.scss !! - this is what tells our pre-processor that this file defines a PARTIAL
+
+
+To use this in main,
+@import "variables" - NO NEED TO ADD THE _ PREFIX OR .SCSS SUFFIX
+
+Makes our codebase - 1) Modular 2) Maintainable
+
+
+MIXINS IN SCSS
+===============
+
+Mixins essentially allows you to create reusable styles/ reusable pieces of code.
+You can use these mixins to mix them into your other designs so that you can include them wherever you want throughout your code instead of rewriting that piece of code.
+Mixins are also available as part of frameworks which you can reuse.
+
+@mixin <name_of_mixin> {
+  [define which styles exactly this mixin is supposed to apply]
+}
+
+To use a mixin, 
+
+.<some_class> {
+  @import <name_of_mixin>
+}
+
+You can use mixins inside other mixins as well!
+
+YOU CAN HAVE PARAMETERS PASSED TO MIXINS AS WELL - ARGUMENTS ARE PLACED JUST LIKE HOW VARIABLES ARE
+
+@mixin rounded($radius) {
+  border-radius: $radius;
+}
+
+You can give default values as well : 
+@mixin rounded($radius: 5px) {
+  border-radius: $radius;
+}
+
+Note: 
+If you have 2 arguments and both have default arguments and you want to pass arguments to only the second parameter : EXPLICITLY USE THE NAME OF THE SECOND PARAMETER
+If you use explicit names while giving actual parameters: YOU CAN SWITCH THE ORDER!
+
+When you want to pass multiple arguments of the same type to a mixin, you can do so by giving: 
+    @mixin boxshadow($shadows...) {
+
+    }
+The three dots in the arguments place specifies that you can give it multiple 'shadows' arguments [THEY ARE CALLED VARARGS]
+
+PASSING CONTENT INTO MIXINS
+===========================
+
+@mixin apply-to-ie6 { // Applies the content only to IE6
+  * html { // WORK AROUND TO HAVE SOME STYLE ONLY APPLY TO IE6 - only IE6 will allow the * before the html
+    @content; // This will fill in any content that we pass in to our mixin
+  }
+}
+
+Gives:
+1. Readability
+2. Code is cleaner
+3. Hacks specific to certain browser versions easier to make
+
+PREFIX REUSE SYNTAX IN SCSS
+===========================
+
+We have a lot of CSS properties that start with the same prefixes like border, font etc
+So, there's a nice syntax for it .
+
+Eg: 
+    font: {
+      size: 22px;
+      weight: bold;
+    }
+
+IMPORTS IN SCSS
+================
+
+The import directive is similar to the css import but is more powerful.
+So, in many cases the SCSS import is just going to be an enormous CSS import.
+There are actually 4 cases when our SCSS import is just a CSS import: 
+    1. Import something that starts with url() - @import url(...); - url() is a CSS data type that denotes a pointer to a resource such as image or font : they can be used in places like background-image, cursor and list-style
+    2. Import that starts with "http://" - @import "http://...";
+    3. Import something ends with .css - @import "filename.css";
+    4. Import something like @import "style-screen" screen; (screen is a media query) // This means that the stylesheet is only to be applied for screens which means its not going to affect the Print Layout for example
+
+Extra capabilities:
+    1. Import partials - also without putting the _ in front or adding the file extension in the end
+    2. Import other SCSS files
+How does imports actually happen- 
+    The preprocessor goes ahead and looks first at the current directory we are in.
+    NOTE: THEY USUALLY HAVE A SEPARATE PARTIALS FOLDER FOR ALL PARTIALS
+    NOTE: WE CANNOT HAVE FILES WITH SAME NAME THAT ARE BOTH PARTIALS AND SCSS FILES
+    NOTE: YOU COULD IMPORT MULTIPLE FILES IN A SINGLE IMPORT STATEMENT BY USING COMMAS
+          Eg: @import "variables", "mixins"
+
+
+MEDIA QUERIES IN SCSS 
+=====================
+
+First, it is important to realize that when using the SCSS syntax, every CSS stylesheet is also an SCSS stylesheet.
+So, you can use all the media queries that you use in CSS the exact same way in SCSS.
+
+But media queries in SCSS have one extra feature: Thats because in SCSS you can nest your selectors
+                                                  So, it would be possible to have nested media queries
+That is, media queires can only be in the top level in CSS - but in SCSS you can have them inside a selector and it would automatically work.                                                  
+
+This means that we could add a media query inside our body tag or inside any other selector we wanna use and the preprocessor is going to go and bubble that media query up to the top level while gathering all selectors on the way.
+So in the end you'll have the correct media queries being applied to the correct selectors
+
+Eg 1: We set size to 960px so if we change our viewing thing in the developer console, text goes outside.
+      #main
+      {
+        width: $content-width; // The problem!
+        ...
+      }
+      We change that to,
+      #main {
+         width: $content-width;
+         @media only screen and (max-width: 960px) {
+         width: auto;
+         max-width: $content-width;
+        } ... 
+      } 
+      And this becomes in CSS, 
+        @media only screen and (max-width: 960px) {
+          #main {
+            width: auto;
+            max-width: $content-width;
+          }
+        }
+
+
+MIXINS AND MEDIA-QUERIES
+========================
+
+We can make media queries more flexible by combining media queries with mixins!
+So, we can create mixins to handle all these typical media queries for us.
+
+Eg: @mixin tiny-screens() {
+  @media only screen and (max-width: 320px) {
+    @content;
+  }
+}
+
+Advantages : 1. More readable 2. Change in one place and it gets changed wherever we use it
+
+SASS - BASIC ARITHMATIC AND SASS SHELL
+======================================
+
+SASS has a shell! 
+
+To start it, use $sass -i 
+
+ADDITION: 
+3px + 4px
+7px
+
+MULTIPLICATION (TRICKY):
+3px * 4px
+12px*px // NOT A VALID CSS TYPE BUT YOU COULD USE THIS AS AN INTERMEDIATE VALUE -> SAY IF YOU DIVIDE THIS 6PX 
+
+CONVERSION BETWEEN TYPES (TRICKY):
+1in - 6px
+0.9375in 
+
+// Be careful with type conversion as well
+2em - 4px 
+Error: em and px are not compatible units (since em is dependent on the font size of the parent container element)
+
+DIVISION (TRICKY): 
+8px/4px
+8px/4px // This will not create any new value since this is pure CSS syntax - it just prints it without changing anything
+
+(8px/4px)
+2 // Sicne this is now SCSS syntax!
+
+$value : 6px
+6px
+$value / 2px
+3 // Since this is now SCSS syntax!
+
+
+SASS - COLOR ARITHMATIC: 
+=======================
+
+ADDITION (SAME AS SUBTRACTION) :
+> #333 + #777
+#AAAAAA // Just adds R,G,B channels induvidually
+
+MULTIPLICATION:
+>#123456 * 2 // Multiplication by scalar value
+> #2468AC
+
+> #222 * #040404
+> #888888 // Since #222 is shorthand of #222222 and each of the R,G,B channels ( which are 22) will be multiplied by 4
+
+DIVISION: 
+> #888 / #080402
+>112244 // Corresponding division for R,G,B channels
+
+
+NOTE: WE USUALLY WILL NOT BE RESORTING TO MANIPULATING COLOURS USING SUCH BASIC ARITHMATIC EXPRESSIONS 
+      SASS OFFERS A SET OF REALLY USEFUL FUNCTIONS TO MANIPULATE COLOURS LIKE THIS
+      EG: lighten - lighten a colour by some percentage
+          darken - darken a colour by some percentage
+          saturate 
+
+
+FUNCTIONS IN SASS
+=================
+
+There are already quite a few functions in CSS that we already use: 
+1. rgb() - Give three integers between 0 and 255 and function returns the corresponding colour
+2. hsl() - Hue, Saturation and Lightness - also returns corresponding colour. Eg: hsl(60,50%,100%)
+3. linear gradient 
+4. calc - To perform operations - but theser are baked into SCSS by default
+
+
+NOTE: & - pesudo selector that references the parent selector
+Built in functions in SASS :
+1. darken(color,%<or>value); //value between 0 and 1
+2. lighten(color,%<or>value); //value between 0 and 1
+3. transparentize (color, %<or>value); //thing>value between 0 and 1
+4. opacify(color, %<or>value); //value between 0 and 1 - DOES THE OPPOSITE OF transparentize
+5. Function to get type of value - colour, number, string and so on 
+6. Function to check whether a value is unitless
+7. Functions to quote and unquote strings
+
+
+CREATING OUR OWN FUNCTIONS
+==========================
+
+@function <function_name> ($arguments ...) {
+  @return <return_thing>
+}
+
+INHERITANCE WITH EXTEND
+=======================
+
+Sometimes you want a class to have all the css styling of another class and then extend
+@extend <selector>
+
+Eg:
+.error {
+  color: red
+}
+
+.critical_error {
+  @extend .error;
+  bottom: 1px solid red;
+  font-weight: bold;
+}
+
+This works by adding the .critical_error selector along with the .error one separated by a comma
+
+Similar to mixins, this is another way to reuse code
+
+NOTE: You can only extend single element selectors . Eg: @extend .error.light is valid but @extend .error .light is not valid
+
+You can have multiple extends inside a selector and you can also have chaining -> one extend in a selector and this selector is extended by some other selector
+
+NOTE: YOU CANNOT EXTEND A SELECTOR THATS OUTSIDE THE MEDIA QUERY FROM A SELECTOR THATS INSIDE THE MEDIA QUERY
+      YOU CAN EXTEND A SELECTOR THATS INSIDE A MEDIA QUERY FROM A SELECTOR THATS OUTSIDE THE MEDIA QUERY
+
+
+EXTEND-ONLY SELECTORS
+----------------------
+
+To create only an extend only selector (this selector itself will not be converted into CSS),
+
+%<selector_name>
+
+
+To not fail when trying to extend a selector that doesn't exist,
+@extend .foo !optional;
+
+
+@mixins vs @extends
+===================
+
+We could achieve whatever the extend does by using mixins as well.
+
+  Instead of:
+              .error {
+                color: red;
+              }
+              .critical_error {
+                @extend .error;
+                font-size: 20px;
+              }
+  We could do. 
+                @mixin error {
+                  color: red;
+                }
+
+                .error {
+                  @include errorl
+                }
+                .critical_error {
+                  @include error;
+                  font-size: 20px;
+                }
+
+
+extend -
+        Generates quite a lot of selectors.
+        Does not generate a lot of replicated code.
+        The issue with media queries is there and also single element selectors.
+        File size is smaller!
+
+mixins - 
+        Generates fewer selectors
+        Has a lot of replicated code.
+        File size is larger!
+  
+
+Now, generally before deploying any CSS file, we generally do a gzip.
+And a comparitive study made when you gzip CSS files between extend and mixins showed that the mixin case actually performed better than the extend statements!!
+This is because gzip works better when you have duplicate data in the file as it just eliminates all those duplicate data!
+
+SO,
+  SOME DESIGNERS DON'T USE EXTEND STATEMENTS AT ALL AND JUST USE MIXINS!
+  BUT MAKE SURE YOU GZIP THE CSS FILE!
+
+
+IF AND ELSE STATEMENTS
+======================
+
+@if {
+
+} @else if {
+
+} @ else {
+
+}
+
+All default declarations need to be put on top! Since SASS is not intelligent enough to understand that they will be put in the else directly
+
+Now we could potentially have the ability to switch between themes
+
+
+CLIENT SPECIFIC OVERRIDING OF THEMES
+====================================
+
+To do this,
+
+1. Have a variable called $client in variables partials
+2. Write mixins for every client value the above variable can take and let the body of that mixin be the @content directive within an @if directive that checks whether the above variable is indeed the client the mixin is being written for
+3. Now you can just @include the specific mixin and write CSS styles for just that client
+
+
+LOOPS 
+=====
+
+There are 3 types of loops in SASS: 
+
+1. FOR LOOPS: 
+--------------
+
+Can only iterate through numbers
+
+@for $i from 1 through 6 { // INCLUDES 6
+  .col-#{$i} {
+    width : $i * 2em;
+  }
+}
+
+@for $i from 1 to 6 { // DOES NOT INCLUDE 6
+  ...
+}
+
+The for loop will always have a step size of 1 or -1 (disadvantage that is solved by the other two loops)
+It will be -1 when the lower bound > upper bound in the syntax 
+
+2. EACH LOOPS (ALSO CALLED FOR-EACH LOOPS): //Most imp
+--------------------------------------------------------
+
+      Note: To create a list: just write the contents separated by ,
+      Eg: 
+            $greetings : hello, bye, goodnight
+
+@each $greeting in $greetings {
+ ... 
+}
+
+Each loops are more powerful than for loops since they can iterate over anything and not just numbers
+
+      Note: To create a map, write them as key value pairs separated by commas, the whole thing inside a normal brackets
+      Eg: 
+          $font-sizes: (tiny: 8px, small: 11px, large: 13px)
+
+@each $name,$size in $font-sizes {
+  .#{$name} {
+    font-size: $size;
+  }
+}
+
+3. WHILE LOOPS :
+----------------
+$j : 2
+@while $j <= 8 {
+  .picture-#{$j} {
+    width: $j * 10%;
+  }
+  $j : $j +2;
+} 
+
+Advantage: You can have your own step size (unlike for loops)
+
+
+FRAMEWORKS
+==========
+
+1. Suzy - lets you design your own grid layout
+2. Breakpoint - mainly deals with media queries
+3. Compass - 

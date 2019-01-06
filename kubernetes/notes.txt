@@ -1,0 +1,660 @@
+                                    DOCKER
+
+Why need Docker?
+----------------
+Download Installer -> Run Installer -> Get error -> Troubleshoot issue -> Rerun Installer -> Get another error ->Trouble shoot issue etc....
+
+This is what Docker is trying to fix: 
+    Docker makes it really easy to install and run software without worrying about setup or dependencies
+
+What is Docker?
+---------------
+
+Docker is not just one thing - its an entire ecosystem
+
+Docker Client       Docker Server
+
+Docker Machine      Docker Images         ->  Docker is a platform or ecosystem around creating and running containers
+
+Docker Hub          Docker Compose
+
+
+When you run the command 'docker run redis': 
+    The Docker CLI reached out to the Docker Hub and downloaded a single file called an Images
+    IMAGE: 
+          It is a single file containing all the dependencies and the configuration required to run a very specific program
+          In our example this program was Redis
+          It is a single file, that gets stored on the hard drive and at some point of time, we can use this image to create something called as a container
+    
+    CONTAINER: 
+          A container is an instance of an image.
+          You can kind of think of it like running a program
+          Container is a program with its own set of hardware resources (memory, networking and hardware)
+
+    There could be multiple containers derived from the same image
+
+DOCKER Client (Also known as Docker CLI):
+-----------------------------------------
+      Takes our comamnds and figures out what to do with them
+      Docker client in itself doesn't actually do anything with containers or images
+      Only a tool or portal of sorts to help us interact with another piece of software called the Docker Server
+  
+DOCKER Server (Also called the Docker Daemon):
+----------------------------------------------
+      Responsible for creating containers, images, maintaining containers, uploading images and doing everything you can imagine
+      We never directly interact with Docker Server. We always go through the client
+
+
+BASIC FLOW :
+-------------
+
+Command = docker run hello-world
+
+1. Goes to DOCKER CLI (DOCKER CLIENT ) : 
+                It does some processing on them and then communicates the command over to Docker Server
+2. In the DOCKER SERVER: 
+                When we typed the specific command, it meant that we wanted to start up a new container using the image with the name hello-world
+                When command came to the Docker Server:
+                    1. It first checked whether it had a local copy of the hello-world image or the hello-world file - So it went and looked into something called the image cache
+                    2. Since the cache was empty, it now reaches out to a free service called Docker Hub
+
+
+                                Your computer             Docker Hub
+
+    docker run hello-world ---> Docker Client             hello-world        - single file with everything needed to run one specific program 
+                                      |                   other image A
+                                      |                     redis
+                                Docker Server               busybox
+
+                                  Image cache
+
+                                  <hello-world>
+
+WHAT REALLY IS A CONTAINER?
+---------------------------
+
+First -> OS overview
+
+  Processes running on Computer         Chrome       Terminal     Spotify        NodeJS
+
+                                          System call   System call   System call
+
+
+                                                           KERNEL
+
+                                                 CPU         memory      Hard Disk
+
+For eg:
+If you've used NodeJS before and you've written a file to disk, it's not technically NodeJS that is speaking directly to the physical device.
+Instead NodeJS says to the kernel that it wants to write a file to the hard drive. The kernel then does the work for it
+
+The system calls are basically endpoints exposed by the kernel and are technically like function invocations
+
+
+Now assume - Chrome and NodeJS are the only two programs running.
+             Also assume that Chrome - needs pythonv2 
+                              NodeJS - needs pythonv3
+              But we have only python v2 in our harddisk
+
+Soln:  Namespacing - We can look at all hardware resources connected to our computer and we can segment out those resources
+                       We can segment out a portion of our hard disk to housing pythonv2 and another segment for pythonv3
+                       Then make sure chrome and nodejs have access to the corresponding segments
+                       So, next time a system call is made to read HD, the kernel makes the decision on where to route it depending on whose calling it
+
+        The process of segmenting a hardware resource based on the process that is asking for it is known as namespacing.
+        With namespacing we are allowed to isolate resources per a process or per a group of processes
+
+        Namespacing - processes harddrives network users hostname IPC
+        ----------- 
+
+        Now, namespacing is not only used for hardware elemts but software elemts as well
+
+        Another feature closely related to namespacing - Control Groups (cgroups)
+        A control group can be used to limit the amount of resources a particular process can use
+
+        Control Group - memory cpu-usage hd_i/o network_bandwidth
+        -------------
+        So,
+        namespacing - this area of the hardrive is for this process
+        control group - used to limit the amount of memory that a process can use
+
+        CONTAINER  - The vertical slice of :
+        =========     
+                    1) A running process and
+                    2) Segment of resource it can talk to
+
+        So do not think of container as a physical construct that exists inside your computer
+        It is a process or a group of processes that have a grouping of resources specifically assigned to it
+        
+                    Container
+                    =========
+          ______________________________
+         |                              |
+         |          Chrome (process)    |
+         |                |             |
+         |                |             |
+         |                |             |
+         |            -----------------------------------  
+         |           |                                   |  
+         |           |               KERNEL              |
+         |
+         |              ---------------------------------
+         |                |             |
+         |                |             |
+         |                |             |
+         |      Hard drive    Network   |  }  Portion of each made available
+         |         RAM          CPU     |  }  to process
+         |                              |
+         --------------------------------
+
+
+
+Relation between Image and a Container
+======================================
+                                                        FRESH CONTAINER
+                                                 ______________________________
+             Image                              |                              |
+   FS Snapshot      Startup Command             |            <EMPTY>           |                            
+Chrome   Python     > Run Chrome                |           (process)          |
+                                                |                |             |
+                                                |                |             |
+                                                |                |             |
+                                                |            -----------------------------------  
+                                                |           |                                   |  
+                                                |           |               KERNEL              |
+                                                |
+                                                |              ---------------------------------
+                                                |                |             |
+                                                |                |             |
+                                                |                |             |
+                                                |      Hard drive    Network   |  }  Portion of each made available
+                                                |         RAM          CPU     |  }  to process
+                                                |                              |
+                                                --------------------------------                                                   
+
+    Images are basically a File System Snapshot
+        - It is kind of like a copy paste of a very specific set of directories or files
+    It also has a startup command
+
+    STEPS happening when image -> container: 
+      1. The kernel isolates a little section of the harddrive and make it available to just the container
+      2. The FS snapshot from the docker image is taken and put in that specific spot allocated
+      3. Now we have a little section of harddrive that has just chrome and python installed
+      4. Startup command is the executed
+      5. Chrome is invoked and we create a new instance of that process and that created process (bring copy of chrome from HD to process)
+      6. This process is then isolated to this set of resouces inside a container
+
+
+HOW IS DOCKER RUNNING ON OUR COMPUTER? 
+=====================================
+
+-> The feature of namespacing and control groups are not included by default on all OS'
+-> Namespacing and Control groups are specific to the Linux OS (not even MacOS)
+
+THEN HOW THE HELL IS DOCKER RUNNING ON MY MAC MACHING? 
+Ans: -> When you install docker, you essentially installed a linux virtual machine. 
+     -> All containers are created inside those VMs.
+     -> Inside the VMs is the Linux Kernel thats going to be hosting the running processes inside the container
+     -> This Linux Kernel is responsible for limiting access, constraining access or isolating access to different H/W resources on the computer
+        <docker version on terminal gives you OS as linux>
+
+                                      LINUX VM <with kernel inside and running processing on top of kernel>
+                                          |
+                                      MacOS/Windows
+                                          |
+                                      Your computer hardware
+
+
+
+DOCKER CLIENT (CLI)
+===================
+
+1. Creating and running a container from an image:
+--------------------------------------------------
+              
+              docker run <image name>
+
+             
+              docker -> reference the docker client
+              run -> try to create and run a container
+              <image name> -> name of image to use for this container
+
+      Eg: docker run hello-world
+          Image had FS snapshot of hello-world and startup command of run hello-world
+          The running process hello-world then got put in hd and then a process created due to startup command invocations
+          This process ran in the container and then eventually exited
+
+        i) Override the default startup command: 
+           -------------------------------------
+
+              docker run <image name> command!
+
+              command! - default command override
+
+                  Eg:1) docker run busybox echo hi there
+                      This prints hi there on the terminal
+
+                    2!) docker run busybox ls
+                      This gives bin, dev, etc, home ,proc, root, sys, temp, usr, var
+                      These folders don't belong to us on our computer.
+                      Thse exist solely inside the container
+
+
+                            Busybox Image
+                  FS Snapshot         Startup command
+              bin  dev  etc  home       <some_command>
+              proc  root
+
+                    3) docker run hello-world ls <or> docker run hello-world echo hi there
+                    > Error response from daemon: OCI runtime create failed 
+                                                  starting container process caused "exec: \"ls\" : executable file note found in $PATH"
+                    
+                    Explanation for above error: 
+                        When you do echo or ls from busy box, those two commands already exist on the busybox file system image
+                        So somewhere within those folders is a ls executable and an echo executable
+                        But no such program exists from within the hello-world file system.
+                        The only program inside hello-world is the program that prints that shit to the terminal
+
+
+
+2. Listing all docker containers
+--------------------------------
+
+                      docker ps
+
+
+                      docker -> reference the docker client
+                      ps -> list all running containers
+
+                      
+                      Eg:1) docker ps 
+                      Output is actually some headers for a table as we have no containers currently running
+                      We've only been running images or creating containers that run very quickly and then immediately close down
+                      So,
+                        2) docker run busybox ping google.com
+                           docker ps
+                      In the output,
+                                PORTS: Ports opened for outside access
+                                NAMES: Randomly generated name to identify the machine
+
+
+                      i) List all containers that have ever been created:
+                      --------------------------------------------------
+
+                                docker ps --all
+
+
+                      docker ps is not only used to get all running containers.
+                      More importantly it is used to get the IDs of running containers.
+                      As we mostly would like to give commands to specific containers
+
+
+ 
+ASIDE: CONTAINER LIFECYCLE (also has commands)
+==========================
+
+-> The docker run command is used for CREATING and RUNNING a container from an image
+-> Creation and running are actually two separate processes
+-> docker run = docker create + docker start
+
+3.docker create - 
+-----------------
+                docker create <image_name> 
+
+                docker -> reference the docker client
+                create -> try to create the container
+                <image name> -> name of image to use in the container
+
+                RETURNS: ID of the container just created
+
+4.docker start - 
+----------------
+                docker start <container_id>
+
+                docker -> reference the docker client
+                start -> try to start the container
+                container_id -> ID of the cotnainer to start
+
+                RETURNS: Again the ID (WTF!)
+                !To solve! : docker start -a <container_id>
+                            -a makes the Docker actually watch for output from container and print it out to terminal
+                            a stands for attached (not sure)
+
+What is Creating a container? 
+-----------------------------
+
+-> The process of taking the file system snapshot from the image and putting it for use insde the container
+
+What is Starting a container? 
+------------------------------
+
+-> Taking the startup command and actually running it so that the process can happen
+
+Difference between docker run and docker start? 
+-----------------------------------------------
+
+                        Docker run                                                  Docker start
+            By default prints shit from container onto terminal         Does not print shit by default onto the terminal, needs -a flag
+
+
+5. Restarting a container -
+--------------------------
+          Same as starting a container
+          
+          docker start -a <container_id>
+
+        Note: Default command cannot be overridden, it is a part of the container now
+              So if we create a docker create busybox echo hi there
+              Everytime we start it or restart it with docker start -a <container_id> the same thing will be echoed
+
+6. Removing stopped containers - 
+-------------------------------
+                  Stopped containers are simply taking space in your computer
+
+                  docker system prune
+
+
+                  NOTE: This removes - 
+                        1) all stopped containers
+                        2) all networks not used by at least one container
+                        3) all dangling images
+                        4) all build cache (or image cache) - stores all images downloaded from Docker Hub
+
+                  So after running docker system prune, we would need to redownload all the system images
+
+7. Retrieving log outputs/ Get Logs from cotnainer - 
+-------------------------------------------------
+              Situation: docker start <command> takes 3 mins to start but you've forgotten the -a!
+                         Oh god. Now you need to wait 3 mins + 3mins to see the actual output!
+
+
+                      docker logs <container_id>
+
+                      docker -> reference the docker client
+                      logs -> get logs
+                      container_id -> ID of the container to look at
+
+              This will print the logs to the terminal.
+
+              NOTE: When you do docker log, you are not rerunning the container.
+                    You just get a record of all the logs that have been emitted from the container
+
+8. Stopping a container - 
+-------------------------
+
+    Stop a container:            docker stop <container_id>   
+
+    Kill a container:            docker kill <container_id>
+
+
+    Stop command :
+        A SIGTERM hardware signal is sent to the process (Terminate Signal)
+        It tells the process to shut down on its own time
+        It gives the process a little bit of time to shutdown itself and do a little bit of cleanup
+
+    Kill command: 
+        A SIGKILL hardware signal is sent to the process (Kill Signal)
+        It tell the process to shut down right now
+        The process is not allowed to do any additional work
+
+
+    NOTE: 
+          IF YOU ISSUE A DOCKER STOP COMMAND AND THE CONTAINER DOES NOT AUTOMATICALLY STOP IN 10 SECONDS,
+          THEN DOCKER IS AUTOMATICALLY GOING TO FALL BACK TO ISSUING A DOCKER KILL COMMAND
+          When you send a stop to the ping command, it does not properly respond.
+          Hence you end up waiting for 10 seconds
+
+
+ASIDE: REDIS
+------------
+
+To start a redis instance, 
+
+                    redis-server
+
+To inspect the data stored and poke into this thing, we use a second program,
+
+                    redis-cli 
+                    (gives an interactive terminal where we can write commands)
+
+
+REDIS WITH DOCKER (some weird behaviour) 
+---------------------------------------
+
+You can do a docker run redis which creates and starts a redis server.
+
+But now, where do you do the redis-cli thing to poke it?!?!?!?!?!?!?!
+Ans: Since we are running redis from within a container, running a redis-cli from another terminal, which is essentially from outside the container, cannot connect to it.
+     So the only way to use it would be to run redis-cli from within the container.
+     That is, we need to be able to start another process (redis-cli) within the container
+
+
+9. SO WE BASICALLY NEED TO EXECUTE ANOTHER COMMAND IN A CONTAINER
+==============================================================
+
+                  docker exec -it <container-id> <command> 
+
+
+                  docker -> reference to the docker client
+                  exec -> run another command
+                  -it -> allow us to provide input to the container
+                  container-id -> ID of the container
+                  command -> command to be executed
+
+                  If you run redis-cli without the -it flag, you will get kicked back immediately to Terminal
+                  This is beacuase redis-cli was started up but we do not have the ability to enter any text
+                  Hence redis-cli just closed down
+
+
+          More on the -it flag
+          --------------------
+          To understand this, we must understand about how processes work in a Linux environment
+
+            ping google.com                     echo hi there                     redis-cli
+        STDIN  STDOUT  STDERR                 STDIN  STDOUT  STDERR             STDIN  STDOUT  STDERR
+
+
+                                Stuff you type       Stuff that shows up on screen
+                                            Your terminal
+
+        The channels STDIN, STDOUT, STDERR are used to communicate info either into the process or out of the process
+
+        The -it flagsn are actually two separate flags squashed together : -i and -t
+        1) -i : 
+                When you execute the new command inside the container, we want to attach our terminal to the STDIN
+        2) -t : 
+                Makes the text that shows up a little bit pretty
+                Also does a little more than that
+                Leave it out: 
+                i) No indentation
+                ii) No autocomplete
+
+
+10. Getting a command propmt in a container / Shell access / Terminal access
+----------------------------------------------------------------------------
+
+      docker exec -it <container_id> sh
+
+      If its right, you'll get a # on the terminal
+      To exit from it, do Command^D or type exit
+
+      sh -> It is a name of a program that is being executed within our container 
+            So this is essentially the previous command wherin the command we run is sh
+            It is a command process or a shell!
+            ------------------------------------
+            Allows us to type commands in and have them executed inside that container
+
+            Other command processors: 
+            1) bash (in macOS) - some support this
+            2) powershell (in Windows)
+            3) zsh
+            4) sh - almost all containers will support this
+
+
+11. Running a container and having a command prompt using docker run
+--------------------------------------------------------------------
+
+Since docker run creates and starts a container, you could also use it to enter directly
+
+          
+          docker run -it <image_name> sh
+
+
+Downside : You cannot be running any other processes in that container generally.
+           So, uncommon
+
+Generally, you have a primary process like a web server and then attach to it a running shell to poke and inspect
+
+
+NOTE: 
+      Two containers DO NOT share File systems.
+      So if you have two busybee containers running and you do a touch hello.txt in one, the hello.txt does NOT show up on the other automatically
+
+
+
+
+MAKING OUR OWN IMAGES 
+=====================
+
+To make our own Docker Images: 
+
+1. Make a DockerFile - Configuration to define how our container should behave
+                     - More specifically, what different programs that it contains and what it does when it starts up
+
+2. Give it to Docker Client (Docker CLI) 
+
+3. Docker Client gives it to Docker Server - It takes the Docker File, looks at the configuration we have inside it and then build a usable container that can be used to start up a new container
+
+
+Structure of a DockerFile
+-------------------------
+
+1. Specify base image
+2. Run some commands to install additional programs
+3. Specify a command to run on container startup
+
+
+EG: Creating an image that runs redis-server
+
+1. mkdir redis-image
+   cd redis-image
+2. Create a file inside that called DockerFile (no extensions)
+   mkdir Dockerfile
+3. Check the redis-image inside the directory to see the code
+4. After you've written, do a docker build .
+
+      COMMAND : docker build .
+
+      build command is used to take a Dockerfile and generate an image out of it
+      The . specifies our build context - a set of files and folders that belong to our project that you want to wrap in this container
+
+--------------------------------------------------------------------------------------------------------------
+DockerFile
+# Use an existing Docker Image as base
+FROM alpine
+#FROM -Instruction telling Docker Server what to do
+#FROM is used to specify what docker image we want to use as the base
+
+#Download and install the dependency
+RUN apk add --update redis
+#RUN - Instruction telling Docker Server what to do
+#RUN is used to execute some command while we are preparing our custom image
+#Tell the image what to do when it starts as a container
+CMD ["redis-server"]
+#CMD - Instruction telling Docker Server what to do
+#CMD is used to specify what should be executed when our image is used to fire up a brand new container
+--------------------------------------------------------------------------------------------------------------
+
+Writing a Dockerfile is like being given a computer with no OS and being told to install Chrome on it
+To do this, the first step you would need to do is install an OS
+Steps you would take :
+1. Install a OS                           ->    Specify a base image
+2. Open default browser                  }  
+3. Go to chrome website                  }
+4. Download Installer                    }      Run commands to install additional programs
+5. Open file/folder explorer             }
+6. Execute chrome_installer.exec         }
+7. Execute chrome.exe                    ->     Command to run on startup
+
+When you create a new docker image, there's nothing there (NO OS EVEN) for you to get started
+Hence you definitely need a base image
+
+Alpine - has a set of programs that helps us in setting up redis
+       - so the apk add --update redis is from Alpine
+
+
+Output of Docker build 
+----------------------
+- Every line of configuration we put in our Dockerfile gave us an extra step
+- Step 1: Downloads alpine from Docker Hub
+- Apart from Step 1, there is an intermediate container of sorts created for all other steps!
+- Step 2: 
+          - Docker went and looked at the image created in the previous step.
+          - It saw the Alpine image. Now, it took that image and created a new container out of it.
+          - The command gets executed as the primary running process on that container
+          - The command is for downloading and installing redis
+          - So we now have redis in that file system
+          - We take a file system snapshot of the container and save it as a temporary image with an ID that is printed after the 'Removing intermediate container' line
+          - Remove the container after stopping the container
+
+          So the output of this step is a new image that contains the changes that we made during the step
+
+-Step 3: 
+          - Docker went and looked at the image created in the previous step.
+          - Create a temporary container out of it
+          - It puts the argument of the CMD as the primary command of the container
+          - BUT IT DOES NOT EXECUTE IT
+          - If you ever choose to run it, then redis-server will be the primary command
+          - Takes a snapshot of the filesystem and the command and saves it as a temporary image with ID printed
+          - Remove the container after stopping the container
+
+
+What gives Docker so much performance when building a new image?
+----------------------------------------------------------------
+
+We know that from every instruction that we specify in the Dockerfile, we get a new image
+If you add another RUN command in the Dockerfile, it basically takes the output image of the previous run command and adds another piece of software to the FS
+Suppose we added,
+RUN apk add --update gcc
+
+Now rebuild our image using docker build .
+
+O/P on rebuild: Step 1: FROM alpine -> got from the image cache
+                Step 2: RUN apk add --update redis -> used from cache
+                Step 3: RUN apk --update gcc -> oh this is a new command let me download and install it
+                Step 4: Okay something has changed in the previous command -> lets not use our cache anymore
+                        Put the command fresh ah
+
+If you do Docker build one more time -> then it sees that nothing has changed and we just take everything from cache
+
+
+
+SO,
+EVERYTIME WE MAKE A CHANGE TO THE DOCKERFILE, WE ONLY MAKE CHANGES IN THE BUILD PROCESS FROM THE POINT IN WHICH THE CHANGE HAS BEEN made
+
+SO, 
+THIS MEANS THAT IF WE TAKE THE EXACT STEPS AND SWITCH THE ORDER AROUND: NO TAKING FROM CACHE WILL HAPPEN AND NEW BUILD IS DONE
+
+SO,
+IF YOU WANT TO MAKE CHANGES IN DOCKERFILE, TRY PUTTING THOSE CHANGES AS FAR BELOW AS POSSIBLE SO THAT REBUILDING THE UNCHANGED ONES HAPPEN FROM CACHE
+
+
+
+TAGGING AN IMAGE
+----------------
+
+                  docker build -t stephengrider/redis:latest . 
+
+                  -t stephengrider/redis:latest - Tags the image
+                  . - specifies the directory of files/folder to use for the build
+
+Everytime we do a docker build . , we had to copy the ID of the generated image and then use it in docker run
+But this is painful! 
+So, the -t flag helps you to set a tag to it
+
+Conventions for naming images - 
+--------------------------------
+              <your docker ID> / <repo/projet name> : <version>
+
+Note: The usual docker imagers you use do not have these conventions because those are community images
+      They're the images that have been created by people in the community and kind of open source for very popular use

@@ -1,0 +1,21 @@
+Object methods are always function expressions -> not declarations
+FE: 
+  const s = function() { //function.name=""
+
+  }
+  or
+  const s = function meow() {//function.name = "meow"
+
+  }
+
+FD: function abitha() {
+
+}
+
+Use getters -> accessed as property without the invocation
+
+Can have expressions on top level as well as declarations
+
+Closure variable can't be accessed outside
+
+Array.find is a function that takes a function as a parameter to find an entity in the array
